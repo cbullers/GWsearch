@@ -3,6 +3,7 @@ from bs4 import BeautifulSoup
 from datetime import datetime, timedelta
 import browsercookie
 import argparse
+import frontier_captcha_solver
 
 '''optional arguments:
   -h, --help            show this help message and exit
@@ -19,6 +20,14 @@ import argparse
 destination_count = 0
 destinations_avail = {}
 roundtrip_avail = {}
+
+# Captcha bypass
+def captcha_bypass(session):
+    cookies = frontier_captcha_solver.get_cookies()
+    if cookies is not None:
+        for cookie in cookies["cookies"]:
+            session.cookies.set(cookie['name'], cookie['value'])
+        session.headers.update({"User-Agent": cookies["user_agent"]})
 
 all_destinations = {
     'ANU': 'Antigua and Barbuda', 
@@ -142,13 +151,13 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
         # Choose a random User-Agent header
         header = {
             "User-Agent": generate_user_agent(),
-        }
+        } if cjs else {}
         cj = browsercookie.chrome() if cjs else None
-        time.sleep(random.uniform(0.5,1.5))
+        #time.sleep(random.uniform(0.5,1.5))
         #time.sleep(random.uniform(0.5,1.5))
         # Get schedule data for the route
         schedule_url = f"https://booking.flyfrontier.com/Flight/RetrieveSchedule?calendarSelectableDays.Origin={origin}&calendarSelectableDays.Destination={dest}"
-        schedule_response = requests.Session().get(schedule_url, headers=header, cookies=cj) if cjs else requests.Session().get(schedule_url, headers=header)
+        schedule_response = session.get(schedule_url, headers=header, cookies=cj) if cjs else session.get(schedule_url, headers=header)
             
         if schedule_response.status_code == 200:
             schedule_data = schedule_response.json()
@@ -162,14 +171,30 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
             if formatted_date in disabled_dates or last_available_date == '0001-01-01 00:00:00':
                 print(f"{i}. No flights available on {formatted_date} from {origin} to {dest}. Date skipped.")
                 continue
-        else:
+        elif schedule_response.status_code == 403:
             print(f"{i}. Problem accessing URL: code {schedule_response.status_code}\n url = " + schedule_url)
+            captcha_bypass(session)
+            schedule_url = f"https://booking.flyfrontier.com/Flight/RetrieveSchedule?calendarSelectableDays.Origin={origin}&calendarSelectableDays.Destination={dest}"
+            schedule_response = session.get(schedule_url, headers=header, cookies=cj) if cjs else session.get(schedule_url, headers=header)
+                
+            if schedule_response.status_code == 200:
+                schedule_data = schedule_response.json()
+                disabled_dates = schedule_data['calendarSelectableDays']['disabledDates']
+                last_available_date = schedule_data['calendarSelectableDays']['lastAvailableDate']
+
+                # Convert the input date to the same format as the disabled dates list
+                formatted_date = date.strftime('%m/%d/%Y')
+
+                # Check if the date is in the list of disabled dates
+                if formatted_date in disabled_dates or last_available_date == '0001-01-01 00:00:00':
+                    print(f"{i}. No flights available on {formatted_date} from {origin} to {dest}. Date skipped.")
+                    continue
 
         
         # Mimic human-like behavior by adding delays between requests
         #delay = random.uniform(2, 5)  # Random delay between 2 to 5 seconds
         #time.sleep(delay)
-        time.sleep(random.uniform(0.5,1.5))
+        #time.sleep(random.uniform(0.5,1.5))
         url = f"https://booking.flyfrontier.com/Flight/InternalSelect?o1={origin}&d1={dest}&dd1={date_str}&ADT=1&mon=true&promo="
         response = session.get(url, headers=header, cookies=cj) if cjs else session.get(url, headers=header)
         if (response.status_code == 200):
@@ -185,6 +210,7 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
                     roundtrip = 1 # reset var for the next dest
                 #f.write(dest + ",")
         else:
+            captcha_bypass(session)
             print(f"{i}. Problem accessing URL: code {response.status_code}\n url = " + url)
             break
     #f.close()
@@ -237,6 +263,7 @@ def extract_html(response):
     return json.loads(decoded_data)
 
 def print_dests(origin):
+    print(json.dumps(destinations_avail, indent=4, sort_keys=True))
     print(f"\n{len(destinations_avail)} destinations found from {origin}:")
     for dest, name in destinations_avail.items():
         print(f"{'**' if dest in roundtrip_avail else ''}{dest}: {name}")
@@ -263,6 +290,11 @@ def main():
     session = requests.Session()
     resume = args.resume
     roundtrip = args.roundtrip
+
+    # captcha bypass
+    if not cjs:
+        captcha_bypass(session)
+
 
     print(f"\nFlights for {fly_date.strftime('%A, %m-%d-%y')}:")
     get_flight_html(origin, fly_date, session, cjs, roundtrip, resume)
