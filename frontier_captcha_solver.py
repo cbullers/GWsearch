@@ -5,6 +5,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
+from pyvirtualdisplay import Display
 
 # Meant to be the final function called in the chain
 # Closes the driver, returns the cookies and user agent
@@ -58,6 +59,10 @@ def _solve_captcha(actions):
 # If it fails, it will retry a few times before giving up
 def get_cookies(retries=3):
 
+    # Start a virtual display
+    display = Display(visible=0, size=(800, 600))
+    display.start()
+
     # Options to disable automation detection
     options = Options()
     options.add_argument("--disable-blink-features=AutomationControlled")
@@ -84,7 +89,7 @@ def get_cookies(retries=3):
     _move_mouse_randomly(driver, actions)
 
     # Simulate pressing the Tab key
-    _solve_captcha(driver, actions)
+    _solve_captcha(actions)
 
     # Now, once the captcha has been solved,
     # It can take some time before it allows us to continue
@@ -102,3 +107,6 @@ def get_cookies(retries=3):
         return get_cookies(retries - 1)
     else:
         raise Exception("Failed to solve captcha")
+    
+if __name__ == "__main__":
+    print(get_cookies())
