@@ -12,6 +12,7 @@ import frontier_captcha_solver
   -d DATES, --dates DATES
                         Show flights for: Today: 1 Tommorrow: 2 Both: 3
   -c, --cjs             Use browser cookies.
+  --captcha-solver      Use captcha solver (experimental).
   -r RESUME, --resume RESUME
                         Index of airport to resume from. Use index 21 to only
                         search for contiguous US destinations.'''
@@ -23,11 +24,13 @@ roundtrip_avail = {}
 
 # Captcha bypass
 def captcha_bypass(session):
-    cookies = frontier_captcha_solver.get_cookies()
-    if cookies is not None:
+    try:
+        cookies = frontier_captcha_solver.get_cookies()
         for cookie in cookies["cookies"]:
             session.cookies.set(cookie['name'], cookie['value'])
         session.headers.update({"User-Agent": cookies["user_agent"]})
+    except:
+        print("Captcha bypass failed. Continuing without cookies.")
 
 all_destinations = {
     'ANU': 'Antigua and Barbuda', 
