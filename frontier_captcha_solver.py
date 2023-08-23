@@ -5,7 +5,6 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.by import By
 from selenium.webdriver.chrome.options import Options
 import time
-from pyvirtualdisplay import Display
 
 # Meant to be the final function called in the chain
 # Closes the driver, returns the cookies and user agent
@@ -57,11 +56,13 @@ def _solve_captcha(actions):
 # It will then use tab/enter to submit the captcha
 # Each attempt takes about 25-30 seconds to complete
 # If it fails, it will retry a few times before giving up
-def get_cookies(retries=3):
+def get_cookies(use_xvfb=False, retries=3):
 
-    # Start a virtual display
-    display = Display(visible=0, size=(800, 600))
-    display.start()
+    # Start a virtual display if requested
+    if use_xvfb:
+        from pyvirtualdisplay import Display
+        display = Display(visible=0, size=(800, 600))
+        display.start()
 
     # Options to disable automation detection
     options = Options()
@@ -104,7 +105,7 @@ def get_cookies(retries=3):
     # We will retry the process a few times
     # before giving up
     if retries > 1:
-        return get_cookies(retries - 1)
+        return get_cookies(use_xvfb, retries - 1)
     else:
         raise Exception("Failed to solve captcha")
     
