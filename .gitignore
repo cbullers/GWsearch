@@ -3,3 +3,4 @@ gowild.db
 node_modules/
 dist/
 .idea/
+env/
