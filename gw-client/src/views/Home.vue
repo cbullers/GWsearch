@@ -100,6 +100,10 @@ const getCheapestJourney = (dest: Destination) =>
   return (cheapestDeparture.fare + cheapestArrival.fare).toFixed(2);
 }
 
+const getDestName = (dest: string) => {
+  return (destinations as any)[dest];
+}
+
 </script>
 
 <template>
@@ -129,7 +133,7 @@ const getCheapestJourney = (dest: Destination) =>
           </q-item-section>
 
           <q-item-section>
-            {{dest.dest_iata}} | {{destinations[dest.dest_iata]}}
+            {{dest.dest_iata}} | {{getDestName(dest.dest_iata)}}
           </q-item-section>
           
           <q-item-section side>
@@ -200,7 +204,7 @@ const getCheapestJourney = (dest: Destination) =>
       </q-chip>
       
       <q-chip square color="blue-9" text-color="white">
-        Destination: {{ selectedDeparture.dest_iata }} | {{ destinations[selectedDeparture.dest_iata] }}
+        Destination: {{ selectedDeparture.dest_iata }} | {{ getDestName(selectedDeparture.dest_iata) }}
       </q-chip>
 
       <q-chip square color="blue-9" text-color="white">

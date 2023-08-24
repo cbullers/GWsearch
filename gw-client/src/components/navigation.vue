@@ -2,7 +2,7 @@
 
 import {computed, ref} from 'vue'
 import {useFlightStore} from "@/stores/flights";
-import {Scrape} from "@/api";
+import type {Scrape} from "@/api";
 
 const store = useFlightStore();
 const scrape = ref(null as any);
