@@ -278,7 +278,8 @@ def main():
     input_dates = args.dates
     #roundtrip = args.roundtrip()
     cjs = args.cjs
-    fly_date = datetime.today() + timedelta(days=input_dates) # Searches date of today + input 
+    #fly_date = datetime.today() + timedelta(days=input_dates) # Searches date of today + input 
+    fly_dates = [datetime.today() + timedelta(days=i) for i in range(input_dates+1)]
     session = requests.Session()
     resume = args.resume
     roundtrip = args.roundtrip
@@ -317,8 +318,11 @@ def main():
     if captcha_solver:
         captcha_bypass(session, virtual_display)
 
-    print(f"\nFlights for {fly_date.strftime('%A, %m-%d-%y')}:")
-    get_flight_html(origin, fly_date, session, cjs, roundtrip, resume)
+    print(f"\nFlights for {','.join([fly_date.strftime('%A, %m-%d-%y') for fly_date in fly_dates])}:")
+    
+    for i, fly_date in enumerate(fly_dates):
+        get_flight_html(origin, fly_date, session, cjs, 0 if i>0 else roundtrip, resume)
+    
     print_dests(origin)
 
     # Close sqlite connection
