@@ -133,10 +133,16 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
         # Insert into Destination table if sqlite is enabled
         if conn and roundtrip != -1:
             c = conn.cursor()
-            c.execute("INSERT INTO Destination (scrape_id, dest_iata, from_iata, roundtrip_available, flight_count, total_fare) VALUES (?, ?, ?, ?, ?, ?)",
-                      (scrape_id, dest, origin, False, 0, 0))
-            conn.commit()
-            last_dest_added_id = c.lastrowid
+            # Check if the destination already exists in the table
+            c.execute("SELECT id FROM Destination WHERE dest_iata = ? AND from_iata = ?", (dest, origin))
+            row = c.fetchone()
+            if row:
+                last_dest_added_id = row[0]
+            else:
+                c.execute("INSERT INTO Destination (scrape_id, dest_iata, from_iata, roundtrip_available, flight_count, total_fare) VALUES (?, ?, ?, ?, ?, ?)",
+                          (scrape_id, dest, origin, False, 0, 0))
+                conn.commit()
+                last_dest_added_id = c.lastrowid
 
         # Get flight data for the route
         response = _get_flight_schedule_data(i, origin, date, dest, session, cj, cjs, header)
