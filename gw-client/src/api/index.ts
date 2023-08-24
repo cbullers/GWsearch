@@ -35,8 +35,11 @@ export interface Flight {
 export class API 
 {
 
-    private static readonly BASE_URL = "http://localhost:5555/api";
-
+    private static readonly BASE_URL =
+        window.location.href.indexOf('localhost') > 0
+        ? 'http://localhost:5555/api'
+            : '/api';
+        
     public static async getScrape(id: number): Promise<Scrape> 
     {
         const response = await fetch(`${this.BASE_URL}/scrapes/${id}`);
