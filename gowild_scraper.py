@@ -134,7 +134,7 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
         if conn and roundtrip != -1:
             c = conn.cursor()
             # Check if the destination already exists in the table
-            c.execute("SELECT id FROM Destination WHERE dest_iata = ? AND from_iata = ?", (dest, origin))
+            c.execute("SELECT id FROM Destination WHERE dest_iata = ? AND from_iata = ? AND scrape_id", (dest, origin, scrape_id))
             row = c.fetchone()
             if row:
                 last_dest_added_id = row[0]
