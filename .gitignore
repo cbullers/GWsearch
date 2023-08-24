@@ -2,3 +2,4 @@ __pycache__/*
 gowild.db
 node_modules/
 dist/
+.idea/

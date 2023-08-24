@@ -4,7 +4,10 @@ import { RouterLink, RouterView } from 'vue-router'
 
 <template>
 
+<Suspense>
   <RouterView />
+</Suspense>
+
 </template>
 
 <style scoped>

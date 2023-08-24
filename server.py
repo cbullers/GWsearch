@@ -1,8 +1,10 @@
 from flask import Flask, send_from_directory, Response
+from flask_cors import CORS
 import os
 import sqlite3
 
 app = Flask(__name__, static_folder='gw-client/dist')
+CORS(app)
 
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
@@ -67,4 +69,4 @@ def get_conn():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(port=5555)
