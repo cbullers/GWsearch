@@ -2,6 +2,7 @@ from flask import Flask, send_from_directory, Response
 from flask_cors import CORS
 import os
 import sqlite3
+import argparse
 
 app = Flask(__name__, static_folder='gw-client/dist')
 CORS(app)
@@ -69,4 +70,9 @@ def get_conn():
 
 
 if __name__ == '__main__':
-    app.run(port=5555)
+    parser = argparse.ArgumentParser()
+    # arg for port
+    parser.add_argument('-p', '--port', type=int, default=42345)
+    args = parser.parse_args()
+
+    app.run(port=args.port)
