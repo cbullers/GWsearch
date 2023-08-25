@@ -3,6 +3,7 @@
 import {computed, ref} from 'vue'
 import {useFlightStore} from "@/stores/flights";
 import type {Scrape} from "@/api";
+import destinations from "@/destinations";
 
 const store = useFlightStore();
 const scrape = ref(null as any);
@@ -23,10 +24,9 @@ scrape.value = recent;
 <template>
 
   <div class="full-width flex justify-center" style="position:sticky;top:0;z-index:999;">
-    <q-toolbar class="bg-green-5 text-white shadow-2">
+    <q-toolbar class="bg-green-5 text-white shadow-2 flex justify-between">
       <q-btn flat label="GWsearch" />
-      <q-space />
-      <q-toolbar-title>From: {{ store.origin }}</q-toolbar-title>
+      <q-btn flat :label="'FROM: ' + store.origin + ' | ' + destinations[store.origin]" />
       
       
       <div class="flex justify-center items-center" style="gap:.2rem;">
@@ -36,6 +36,7 @@ scrape.value = recent;
         </q-chip>
         <q-select
           v-model="scrape"
+          dense
           :options="store.scrapes"
           :option-value="option => option.id"
           :option-label="option => new Date(option.scrape_time).toLocaleString()"
@@ -51,5 +52,5 @@ scrape.value = recent;
 </template>
 
 <style scoped>
-
+>>> span { color:white; }
 </style>
