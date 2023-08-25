@@ -41,7 +41,7 @@ const getDestName = (dest: string) => {
         <q-select
           v-model="scrape"
           dense
-          :options="store.scrapes"
+          :options="store.scrapes.sort((a,b) => b.scrape_time > a.scrape_time ? 1 : -1)"
           :option-value="option => option.id"
           :option-label="option => new Date(option.scrape_time).toLocaleString()"
           @update:model-value="loadScrape"
