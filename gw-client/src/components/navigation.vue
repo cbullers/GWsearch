@@ -19,6 +19,10 @@ const recent = store.scrapes.reduce((prev, current) => (prev.scrape_time > curre
 loadScrape(recent);
 scrape.value = recent;
 
+const getDestName = (dest: string) => {
+  return (destinations as any)[dest];
+}
+
 </script>
 
 <template>
@@ -26,7 +30,7 @@ scrape.value = recent;
   <div class="full-width flex justify-center" style="position:sticky;top:0;z-index:999;">
     <q-toolbar class="bg-green-5 text-white shadow-2 flex justify-between">
       <q-btn flat label="GWsearch" />
-      <q-btn flat :label="'FROM: ' + store.origin + ' | ' + destinations[store.origin]" />
+      <q-btn flat :label="'FROM: ' + store.origin + ' | ' + getDestName(store.origin)" />
       
       
       <div class="flex justify-center items-center" style="gap:.2rem;">
