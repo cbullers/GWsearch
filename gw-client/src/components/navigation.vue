@@ -31,6 +31,9 @@ scrape.value = recent;
       
       <div class="flex justify-center items-center" style="gap:.2rem;">
 <!--        <q-toolbar-title>Selected Scrape</q-toolbar-title>-->
+        <q-chip square dense color="red" text-color="white" v-if="!store.selectedScrape?.success">
+          Scrape Incomplete/Invalid
+        </q-chip>
         <q-select
           v-model="scrape"
           :options="store.scrapes"
