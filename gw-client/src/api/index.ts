@@ -37,7 +37,7 @@ export class API
 
     private static readonly BASE_URL =
         window.location.href.indexOf('localhost') > 0
-        ? 'http://localhost:5555/api'
+        ? 'http://localhost:42345/api'
             : '/api';
         
     public static async getScrape(id: number): Promise<Scrape> 

@@ -14,15 +14,62 @@ const store = useFlightStore();
 
 const filters = ref({
   roundtrip: true,
+  desiredDeparture: null as Date | null,
+  desiredReturn: null as Date | null,
+  sortBy: 'Location Time',
+  sort: 'desc',
+  minimumLocationTimeHours: 4,
+})
+
+const sorts = [
+  'Location Time',
+  'Total Flights',
+    'Travel Time',
+    'Round-Trip Flights',
+    'Fare'
+]
+
+const dests = computed(() => {
+  
+  return store.selectedScrape?.destinations.map(d => {
+    const {flights, ...rest} = d;
+    return {
+      ...rest,
+      flights: flights.filter(f => {
+        // filter out flights that arrive later than desired return date
+        return (!(filters.value.desiredReturn && (new Date(f.arrival_time) > new Date(filters.value.desiredReturn))))
+            && (!(filters.value.desiredDeparture && (new Date(f.departure_time) < new Date(filters.value.desiredDeparture))))
+            && (!(filters.value.minimumLocationTimeHours && (getLongestTimeInLocation(d, false) as number < filters.value.minimumLocationTimeHours*60*60*1000)))
+      })
+    }
+  })
+  
 })
 
 const filteredDestinations = computed(() => {
   if(!store.selectedScrape || !store.selectedScrape.destinations)
     return [];
   
-  return store.selectedScrape.destinations.filter(dest => {
-    return !(filters.value.roundtrip && !dest.roundtrip_available);
-  }).filter(dest => dest.flights.filter(f => f.from_iata === store.origin).length > 0);
+  return dests.value?.filter(dest => {
+    return !(filters.value.roundtrip && !dest.roundtrip_available) && (getLongestTimeInLocation(dest, false) as number > 0);
+  }).filter(dest => dest.flights.filter(f => f.from_iata === store.origin).length > 0)
+      .sort((a:Destination, b:Destination) => {
+
+        switch(filters.value.sortBy)
+        {
+          case 'Location Time':
+            return (filters.value.sort === 'asc') ? getLongestTimeInLocation(a, false) > getLongestTimeInLocation(b, false) ? 1 : -1 : getLongestTimeInLocation(a, false) < getLongestTimeInLocation(b, false) ? 1 : -1;
+          case 'Total Flights':
+            return (filters.value.sort === 'asc') ? a.flights.length > b.flights.length ? 1 : -1 : a.flights.length < b.flights.length ? 1 : -1;
+          case 'Round-Trip Flights':
+            return (filters.value.sort === 'asc') ? getReturnFlightCount(a) > getReturnFlightCount(b) ? 1 : -1 : getReturnFlightCount(a) < getReturnFlightCount(b) ? 1 : -1;
+          case 'Travel Time':
+            return (filters.value.sort === 'asc') ? (getShortestTravelTime(a,false) > getShortestTravelTime(b,false) ? 1 : -1) : (getShortestTravelTime(a,false) < getShortestTravelTime(b,false) ? 1 : -1);
+          case 'Fare':
+            return (filters.value.sort === 'asc') ? getCheapestJourney(a, false) > getCheapestJourney(b, false) ? 1 : -1 : getCheapestJourney(a, false) < getCheapestJourney(b, false) ? 1 : -1;
+        }
+        return 0;
+      })
 })
 
 const selectedDeparture = ref<Flight | null>(null);
@@ -51,7 +98,7 @@ const getReturnFlightCount = (dest: Destination) =>
   return dest.flights.filter(f => f.dest_iata === store.origin).length;
 }
 
-const getShortestTravelTime = (dest: Destination) =>
+const getShortestTravelTime = (dest: Destination, human=true) =>
 {
   const departures = dest.flights.filter(f => f.from_iata === store.origin);
   const arrivals = dest.flights.filter(f => f.dest_iata === store.origin);
@@ -66,11 +113,11 @@ const getShortestTravelTime = (dest: Destination) =>
     return 0;
   moment.relativeTimeThreshold('h', 1000);
   let duration = moment.duration((shortestDeparture.total_time + shortestArrival.total_time)*1000)
-  return duration.humanize();
+  return human ? duration.humanize() : duration.asMilliseconds();
 }
 
 
-const getLongestTimeInLocation = (dest: Destination) =>
+const getLongestTimeInLocation = (dest: Destination, human=true) =>
 {
   const departures = dest.flights.filter(f => f.from_iata === store.origin);
   const arrivals = dest.flights.filter(f => f.dest_iata === store.origin);
@@ -83,10 +130,10 @@ const getLongestTimeInLocation = (dest: Destination) =>
   
   moment.relativeTimeThreshold('h', 1000);
   let duration = moment.duration((new Date(latestArrivalDeparture.departure_time).getTime() - new Date(earliestDepartureArrival.arrival_time).getTime()));
-  return duration.humanize();
+  return human ? duration.humanize() : duration.asMilliseconds();
 }
 
-const getCheapestJourney = (dest: Destination) =>
+const getCheapestJourney = (dest: Destination, human=true) =>
 {
   const departures = dest.flights.filter(f => f.from_iata === store.origin);
   const arrivals = dest.flights.filter(f => f.dest_iata === store.origin);
@@ -97,7 +144,7 @@ const getCheapestJourney = (dest: Destination) =>
   const cheapestDeparture = departures.reduce((prev, current) => (prev.fare < current.fare) ? prev : current);
   const cheapestArrival = arrivals.reduce((prev, current) => (prev.fare < current.fare) ? prev : current);
   
-  return (cheapestDeparture.fare + cheapestArrival.fare).toFixed(2);
+  return human ? (cheapestDeparture.fare + cheapestArrival.fare).toFixed(2) : (cheapestDeparture.fare + cheapestArrival.fare);
 }
 
 const getDestName = (dest: string) => {
@@ -111,9 +158,56 @@ const getDestName = (dest: string) => {
   <navigation />
 
   <div class="full-width flex justify-center">
-    <q-toolbar class="bg-grey-2 shadow-2">
+    <q-toolbar class="bg-grey-2 shadow-2 flex" style="gap:.5rem;">
+      
 
-      <q-checkbox v-model="filters.roundtrip" label="Round-Trip Only" />
+      <q-field filled square stack-label dense class="col-grow" borderless readonly>
+        <template v-slot:control>
+          <q-checkbox v-model="filters.roundtrip" label="Round-Trip Only" dense />
+        </template>
+      </q-field>
+      
+      <q-input filled v-model="filters.desiredDeparture" mask="##/##/####" class="col-grow" square hide-bottom-space dense label="Desired Departure">
+        <template v-slot:append>
+          <q-icon name="event" class="cursor-pointer">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="filters.desiredDeparture" mask="MM/DD/YYYY">
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="Close" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-icon>
+        </template>
+      </q-input>
+      
+      <q-input filled v-model="filters.desiredReturn" mask="##/##/####" class="col-grow" square hide-bottom-space dense label="Desired Return">
+        <template v-slot:append>
+          <q-icon name="event" class="cursor-pointer">
+            <q-popup-proxy cover transition-show="scale" transition-hide="scale">
+              <q-date v-model="filters.desiredReturn" mask="MM/DD/YYYY">
+                <div class="row items-center justify-end">
+                  <q-btn v-close-popup label="Close" color="primary" flat />
+                </div>
+              </q-date>
+            </q-popup-proxy>
+          </q-icon>
+        </template>
+      </q-input>
+      
+      <q-input filled v-model="filters.minimumLocationTimeHours" class="col-grow" square hide-bottom-space dense label="Min Loc Time (Hrs)" />
+
+      <q-select
+          v-model="filters.sortBy"
+          :options="sorts"
+          class="col-grow"
+          dense
+          filled
+          square
+          label="Sort"
+      />
+      <q-avatar icon="arrow_upward" dense :text-color="filters.sort==='asc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='asc'" />
+      <q-avatar icon="arrow_downward" dense :text-color="filters.sort==='desc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='desc'"  />
 
     </q-toolbar>
   </div>
