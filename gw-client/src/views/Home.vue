@@ -14,8 +14,8 @@ const store = useFlightStore();
 
 const filters = ref({
   roundtrip: true,
-  desiredDeparture: null as Date | null,
-  desiredReturn: null as Date | null,
+  desiredDeparture: null as any,
+  desiredReturn: null as any,
   sortBy: 'Location Time',
   sort: 'desc',
   minimumLocationTimeHours: 4,
