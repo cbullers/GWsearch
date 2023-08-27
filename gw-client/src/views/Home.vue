@@ -16,13 +16,14 @@ const filters = ref({
   roundtrip: true,
   desiredDeparture: null as any,
   desiredReturn: null as any,
-  sortBy: 'Location Time',
+  sortBy: 'Sunlight Hours',
   sort: 'desc',
   minimumLocationTimeHours: 4,
 })
 
 const sorts = [
   'Location Time',
+    'Sunlight Hours',
   'Total Flights',
     'Travel Time',
     'Round-Trip Flights',
@@ -39,7 +40,6 @@ const dests = computed(() => {
         // filter out flights that arrive later than desired return date
         return ((!filters.value.desiredReturn || (new Date(f.arrival_time).setHours(0,0,0,0) <= new Date(filters.value.desiredReturn).setHours(0,0,0,0))))
             && ((!filters.value.desiredDeparture || (new Date(f.departure_time).setHours(0,0,0,0) >= new Date(filters.value.desiredDeparture).setHours(0,0,0,0))))
-            && (!(filters.value.minimumLocationTimeHours && (getLongestTimeInLocation(d, false) as number < filters.value.minimumLocationTimeHours*60*60*1000)))
       })
     }
   })
@@ -52,7 +52,11 @@ const filteredDestinations = computed(() => {
   
   return dests.value?.filter(dest => {
     return !(filters.value.roundtrip && !dest.roundtrip_available) && (getLongestTimeInLocation(dest, false) as number > 0);
-  }).filter(dest => dest.flights.filter(f => f.from_iata === store.origin).length > 0)
+  }).filter(dest =>
+  {
+    return dest.flights.filter(f => f.from_iata === store.origin).length > 0
+      && (!(filters.value.minimumLocationTimeHours && (getLongestTimeInLocation(dest, false) as number < filters.value.minimumLocationTimeHours*60*60*1000)))
+  })
       .sort((a:Destination, b:Destination) => {
 
         switch(filters.value.sortBy)
@@ -67,6 +71,8 @@ const filteredDestinations = computed(() => {
             return (filters.value.sort === 'asc') ? (getShortestTravelTime(a,false) > getShortestTravelTime(b,false) ? 1 : -1) : (getShortestTravelTime(a,false) < getShortestTravelTime(b,false) ? 1 : -1);
           case 'Fare':
             return (filters.value.sort === 'asc') ? getCheapestJourney(a, false) > getCheapestJourney(b, false) ? 1 : -1 : getCheapestJourney(a, false) < getCheapestJourney(b, false) ? 1 : -1;
+          case 'Sunlight Hours':
+            return (filters.value.sort === 'asc') ? (getLongestSunlightHoursInLocation(a,false) > getLongestSunlightHoursInLocation(b,false) ? 1 : -1) : (getLongestSunlightHoursInLocation(a,false) < getLongestSunlightHoursInLocation(b,false) ? 1 : -1);
         }
         return 0;
       })
@@ -130,6 +136,59 @@ const getLongestTimeInLocation = (dest: Destination, human=true) =>
   
   moment.relativeTimeThreshold('h', 1000);
   let duration = moment.duration((new Date(latestArrivalDeparture.departure_time).getTime() - new Date(earliestDepartureArrival.arrival_time).getTime()));
+  return human ? duration.humanize() : duration.asMilliseconds();
+}
+
+function calculateSunlightHours(departure: any, arrival: any) {
+  const MS_IN_HOUR = 1000 * 60 * 60;
+  const SUNLIGHT_START_HOUR = 6;
+  const SUNLIGHT_END_HOUR = 18;
+
+  let totalSunlightHours = 0;
+  let current = new Date(departure) as any;
+
+  while (current < arrival) {
+    let nextDay = new Date(current) as any;
+    nextDay.setHours(24, 0, 0, 0);
+
+    let sunlightStart = new Date(current).setHours(SUNLIGHT_START_HOUR, 0, 0, 0);
+    let sunlightEnd = new Date(current).setHours(SUNLIGHT_END_HOUR, 0, 0, 0);
+
+    let actualStart = Math.max(current, sunlightStart);
+    let actualEnd = Math.min(nextDay, arrival, sunlightEnd);
+
+    if (actualEnd > actualStart) {
+      totalSunlightHours += (actualEnd - actualStart) / MS_IN_HOUR;
+    }
+
+    current = nextDay;
+  }
+
+  return totalSunlightHours;
+}
+
+
+const getLongestSunlightHoursInLocation = (dest: Destination, human=true) =>
+{
+  const departures = dest.flights.filter(f => f.from_iata === store.origin).map(f => new Date(f.arrival_time).getTime());
+  const returns = dest.flights.filter(f => f.dest_iata === store.origin).map(f => new Date(f.departure_time).getTime());
+  
+  if(departures.length === 0 || returns.length === 0)
+    return 0;
+
+  let maxSunlightHours = 0;
+
+  departures.forEach(departure => {
+    returns.forEach(returnTime => {
+      if (returnTime > departure) {
+        let sunlightHours = calculateSunlightHours(departure, returnTime);
+        maxSunlightHours = Math.max(maxSunlightHours, sunlightHours);
+      }
+    });
+  });
+  
+  moment.relativeTimeThreshold('h', 1000);
+  let duration = moment.duration(maxSunlightHours, 'hours');
   return human ? duration.humanize() : duration.asMilliseconds();
 }
 
@@ -225,20 +284,23 @@ const getDestName = (dest: string) => {
       >
         <template v-slot:header>
           <q-item-section>
-            <div class="flex justify-between no-wrap items-center" style="gap:1rem;">
+            <div class="flex justify-between no-wrap items-center" style="gap:0.5rem;">
               <span><strong>{{dest.dest_iata}}</strong> | {{getDestName(dest.dest_iata)}}</span>
-              <div class="flex justify-end" style="gap:.2rem;">
+              <div class="flex justify-end" style="gap:.05rem;">
                 <q-chip square color="primary" text-color="white" icon="event" size="sm">
-                  {{ dest.flights.length }} total flights
+                  {{ dest.flights.length }} flights
                 </q-chip>
                 <q-chip v-if="dest.roundtrip_available" square color="green" text-color="white" icon="check" size="sm">
-                  Round-Trip (x{{ getReturnFlightCount(dest) }})
+                  Returns (x{{ getReturnFlightCount(dest) }})
                 </q-chip>
                 <q-chip square color="secondary" text-color="white" icon="airplane_ticket" size="sm">
                   {{ getShortestTravelTime(dest) }}
                 </q-chip>
                 <q-chip square color="accent" text-color="white" icon="location_on" size="sm">
                   {{ getLongestTimeInLocation(dest) }}
+                </q-chip>
+                <q-chip square color="yellow" text-color="black" icon="wb_sunny" size="sm">
+                  {{ getLongestSunlightHoursInLocation(dest) }}
                 </q-chip>
                 <q-chip square color="green-8" text-color="white" icon="attach_money" size="sm">
                   {{ getCheapestJourney(dest) }}
@@ -309,6 +371,10 @@ const getDestName = (dest: string) => {
 
       <q-chip square color="blue-9" text-color="white">
         Time In Location: {{ moment.duration(moment(selectedDeparture.arrival_time).diff(moment(selectedReturn.departure_time))).humanize() }}
+      </q-chip>
+
+      <q-chip square color="blue-9" text-color="white">
+        Sunlight Hrs: {{ calculateSunlightHours(new Date(selectedDeparture.arrival_time).getTime(), new Date(selectedReturn.departure_time).getTime()).toFixed(2) }}
       </q-chip>
 
       <q-chip square color="blue-9" text-color="white">
