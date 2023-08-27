@@ -37,8 +37,8 @@ const dests = computed(() => {
       ...rest,
       flights: flights.filter(f => {
         // filter out flights that arrive later than desired return date
-        return (!(filters.value.desiredReturn && (new Date(f.arrival_time) > new Date(filters.value.desiredReturn))))
-            && (!(filters.value.desiredDeparture && (new Date(f.departure_time) < new Date(filters.value.desiredDeparture))))
+        return ((!filters.value.desiredReturn || (new Date(f.arrival_time).setHours(0,0,0,0) <= new Date(filters.value.desiredReturn).setHours(0,0,0,0))))
+            && ((!filters.value.desiredDeparture || (new Date(f.departure_time).setHours(0,0,0,0) >= new Date(filters.value.desiredDeparture).setHours(0,0,0,0))))
             && (!(filters.value.minimumLocationTimeHours && (getLongestTimeInLocation(d, false) as number < filters.value.minimumLocationTimeHours*60*60*1000)))
       })
     }
