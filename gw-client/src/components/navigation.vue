@@ -28,7 +28,7 @@ const getDestName = (dest: string) => {
 <template>
 
   <div class="full-width flex justify-center" style="position:sticky;top:0;z-index:999;">
-    <q-toolbar class="bg-green-5 text-white shadow-2 flex justify-between">
+    <q-toolbar class="bg-green-5 text-white shadow-2 flex justify-between" style="flex-wrap:wrap!important;">
       <q-btn flat label="GWsearch" />
       <q-btn flat :label="'FROM: ' + store.origin + ' | ' + getDestName(store.origin)" />
       

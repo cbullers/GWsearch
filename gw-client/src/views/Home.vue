@@ -158,7 +158,7 @@ const getDestName = (dest: string) => {
   <navigation />
 
   <div class="full-width flex justify-center">
-    <q-toolbar class="bg-grey-2 shadow-2 flex" style="gap:.5rem;">
+    <q-toolbar class="bg-grey-2 shadow-2 flex q-pa-sm" style="gap:.5rem;flex-wrap: wrap!important;">
       
 
       <q-field filled square stack-label dense class="col-grow" borderless readonly>
@@ -206,8 +206,10 @@ const getDestName = (dest: string) => {
           square
           label="Sort"
       />
-      <q-avatar icon="arrow_upward" dense :text-color="filters.sort==='asc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='asc'" />
-      <q-avatar icon="arrow_downward" dense :text-color="filters.sort==='desc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='desc'"  />
+      <div>
+        <q-avatar icon="arrow_upward" dense :text-color="filters.sort==='asc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='asc'" />
+        <q-avatar icon="arrow_downward" dense :text-color="filters.sort==='desc' ? 'black' : 'grey'" rounded icon-right class="cursor-pointer" @click="filters.sort='desc'"  />
+      </div>
 
     </q-toolbar>
   </div>
@@ -222,34 +224,30 @@ const getDestName = (dest: string) => {
           header-class="text-primary"
       >
         <template v-slot:header>
-          <q-item-section avatar>
-            <q-avatar icon="flight"  />
-          </q-item-section>
-
           <q-item-section>
-            {{dest.dest_iata}} | {{getDestName(dest.dest_iata)}}
+            <div class="flex justify-between no-wrap items-center" style="gap:1rem;">
+              <span><strong>{{dest.dest_iata}}</strong> | {{getDestName(dest.dest_iata)}}</span>
+              <div class="flex justify-end" style="gap:.2rem;">
+                <q-chip square color="primary" text-color="white" icon="event" size="sm">
+                  {{ dest.flights.length }} total flights
+                </q-chip>
+                <q-chip v-if="dest.roundtrip_available" square color="green" text-color="white" icon="check" size="sm">
+                  Round-Trip (x{{ getReturnFlightCount(dest) }})
+                </q-chip>
+                <q-chip square color="secondary" text-color="white" icon="airplane_ticket" size="sm">
+                  {{ getShortestTravelTime(dest) }}
+                </q-chip>
+                <q-chip square color="accent" text-color="white" icon="location_on" size="sm">
+                  {{ getLongestTimeInLocation(dest) }}
+                </q-chip>
+                <q-chip square color="green-8" text-color="white" icon="attach_money" size="sm">
+                  {{ getCheapestJourney(dest) }}
+                </q-chip>
+              </div>
+            </div>
+            
           </q-item-section>
           
-          <q-item-section side>
-            <div class="flex" style="gap:.2rem;">
-              <q-chip square color="primary" text-color="white" icon="event">
-                {{ dest.flights.length }} total flights
-              </q-chip>
-              <q-chip v-if="dest.roundtrip_available" square color="green" text-color="white" icon="check">
-                Round-Trip (x{{ getReturnFlightCount(dest) }})
-              </q-chip>
-              <q-chip square color="secondary" text-color="white" icon="airplane_ticket">
-                {{ getShortestTravelTime(dest) }}
-              </q-chip>
-              <q-chip square color="accent" text-color="white" icon="location_on">
-                {{ getLongestTimeInLocation(dest) }}
-              </q-chip>
-              <q-chip square color="green-8" text-color="white" icon="attach_money">
-                {{ getCheapestJourney(dest) }}
-              </q-chip>
-            </div>
- 
-          </q-item-section>
 
 <!--          <q-item-section side>-->
 <!--            <div class="row items-center">-->
