@@ -30,6 +30,9 @@ const sorts = [
     'Fare'
 ]
 
+const mobile = ref(false);
+mobile.value = window.innerWidth < 768;
+
 const dests = computed(() => {
   
   return store.selectedScrape?.destinations.map(d => {
@@ -288,21 +291,27 @@ const getDestName = (dest: string) => {
               <span><strong>{{dest.dest_iata}}</strong> | {{getDestName(dest.dest_iata)}}</span>
               <div class="flex justify-end" style="gap:.05rem;">
                 <q-chip square color="primary" text-color="white" icon="event" size="sm">
+                  <q-tooltip>Total Count Of Flights</q-tooltip>
                   {{ dest.flights.length }} flights
                 </q-chip>
                 <q-chip v-if="dest.roundtrip_available" square color="green" text-color="white" icon="check" size="sm">
+                  <q-tooltip>Total Return Flight Count</q-tooltip>
                   Returns (x{{ getReturnFlightCount(dest) }})
                 </q-chip>
                 <q-chip square color="secondary" text-color="white" icon="airplane_ticket" size="sm">
+                  <q-tooltip>Shortest Travel Time Combination</q-tooltip>
                   {{ getShortestTravelTime(dest) }}
                 </q-chip>
                 <q-chip square color="accent" text-color="white" icon="location_on" size="sm">
+                  <q-tooltip>Longest Time In Location Combination</q-tooltip>
                   {{ getLongestTimeInLocation(dest) }}
                 </q-chip>
                 <q-chip square color="yellow" text-color="black" icon="wb_sunny" size="sm">
+                  <q-tooltip>Longest Sunlight Hours In Location Combination (6a-6p)</q-tooltip>
                   {{ getLongestSunlightHoursInLocation(dest) }}
                 </q-chip>
                 <q-chip square color="green-8" text-color="white" icon="attach_money" size="sm">
+                  <q-tooltip>Cheapest Journey Combination</q-tooltip>
                   {{ getCheapestJourney(dest) }}
                 </q-chip>
               </div>
@@ -357,28 +366,28 @@ const getDestName = (dest: string) => {
         Clear
       </q-chip>
       
-      <q-chip square color="blue-9" text-color="white">
+      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
         Destination: {{ selectedDeparture.dest_iata }} | {{ getDestName(selectedDeparture.dest_iata) }}
       </q-chip>
 
-      <q-chip square color="blue-9" text-color="white">
+      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
         Layovers: {{ moment.duration((selectedReturn.airport_time + selectedDeparture.airport_time)*1000).humanize() }}
       </q-chip>
 
-      <q-chip square color="blue-9" text-color="white">
+      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
         Total Travel Time: {{ moment.duration((selectedReturn.total_time + selectedDeparture.total_time)*1000).humanize() }}
       </q-chip>
 
-      <q-chip square color="blue-9" text-color="white">
+      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
         Time In Location: {{ moment.duration(moment(selectedDeparture.arrival_time).diff(moment(selectedReturn.departure_time))).humanize() }}
       </q-chip>
 
-      <q-chip square color="blue-9" text-color="white">
+      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
         Sunlight Hrs: {{ calculateSunlightHours(new Date(selectedDeparture.arrival_time).getTime(), new Date(selectedReturn.departure_time).getTime()).toFixed(2) }}
       </q-chip>
 
       <q-chip square color="blue-9" text-color="white">
-        Cost: ${{ (selectedReturn.fare + selectedDeparture.fare).toFixed(2) }}
+        ${{ (selectedReturn.fare + selectedDeparture.fare).toFixed(2) }}
       </q-chip>
 
       <q-chip clickable square color="yellow-6" @click="bookFlight">
