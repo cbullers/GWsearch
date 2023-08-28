@@ -1,12 +1,17 @@
 <script setup lang="ts">
 
 import type {Flight} from "@/api";
-import moment from "moment";
+import moment from "moment-timezone";
+import destinations from "@/destinations";
 
 const props = defineProps<{
   flight: Flight,
   selected: boolean,
 }>();
+
+const getDestTz = (dest: string) => {
+  return (destinations as any)[dest]['tz'];
+}
 
 </script>
 
@@ -17,7 +22,7 @@ const props = defineProps<{
     <q-checkbox :model-value="props.selected" @update:model-value="$emit('selected')" />
 
     <q-chip square color="grey-4" icon="arrow_upward" class="col-grow" size="sm">
-      {{ new Date(props.flight.departure_time).toLocaleString() }}
+      {{ moment(props.flight.departure_time).tz(getDestTz(props.flight.from_iata)).format('MM/DD/YYYY hh:mm A z') }}
     </q-chip>
 
     <q-chip square color="grey-4" icon="hourglass_empty" v-if="props.flight.stops_count > 0" class="col-grow" size="sm">
@@ -25,7 +30,7 @@ const props = defineProps<{
     </q-chip>
 
     <q-chip square color="grey-4" icon="arrow_downward" class="col-grow" size="sm">
-      {{ new Date(props.flight.arrival_time).toLocaleString() }}
+      {{ moment(props.flight.arrival_time).tz(getDestTz(props.flight.dest_iata)).format('MM/DD/YYYY hh:mm A z') }}
     </q-chip>
 
     <q-chip square color="grey-4" icon="schedule" class="col-grow" size="sm">
