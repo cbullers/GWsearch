@@ -18,6 +18,7 @@ const filters = ref({
   desiredReturn: null as any,
   sortBy: 'Sunlight Hours',
   sort: 'desc',
+  numAdults: 1,
   minimumLocationTimeHours: 4,
 })
 
@@ -96,7 +97,7 @@ const bookFlight = () => {
   const returnDate = new Date(r?.departure_time).toLocaleDateString();
   
   const url = `https://booking.flyfrontier.com/Flight/InternalSelect?o1=${d?.from_iata}&d1=${d?.dest_iata}&dd1=${departDate}
-  &o2=${r?.from_iata}&d2=${r?.dest_iata}&dd2=${returnDate}&mon=true&umnr=false&ADT=1`;
+  &o2=${r?.from_iata}&d2=${r?.dest_iata}&dd2=${returnDate}&mon=true&umnr=false&ADT=${filters.value.numAdults}`;
   
   window.open(url, '_blank');
   
@@ -284,8 +285,10 @@ const getDestTz = (dest: string) => {
           </q-icon>
         </template>
       </q-input>
-      
+
       <q-input filled v-model="filters.minimumLocationTimeHours" class="col-grow" square hide-bottom-space dense label="Min Loc Time (Hrs)" />
+
+      <q-input filled v-model="filters.numAdults" class="col-grow" square hide-bottom-space dense label="# of Travelers" />
 
       <q-select
           v-model="filters.sortBy"
