@@ -198,7 +198,7 @@ def get_priceline_combo(depart_flight, return_flight, travelers):
     }
     res = r.post('https://priceline.com/shop/search', data=payload, headers=headers, allow_redirects=False)
     
-    return f"https://priceline.com{res.headers.get('Location')}"
+    return f"https://priceline.com{res.headers.get('Location')}&sortby=PRICE"
     
 def dict_factory(cursor, row):
     d = {}
