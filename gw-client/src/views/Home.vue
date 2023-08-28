@@ -128,6 +128,22 @@ const findCar = () => {
   window.open(url, '_blank');
 }
 
+const findHotel = () => {
+  
+    if(!selectedDeparture.value || !selectedReturn.value)
+      return;
+  
+    const d = selectedDeparture.value;
+    const arriveDate = moment(d?.arrival_time).tz(getDestTz(d?.dest_iata)).format('YYYYMMDD');
+  
+    const r = selectedReturn.value;
+    const returnDate = moment(r?.departure_time).tz(getDestTz(r?.from_iata)).format('YYYYMMDD');
+  
+    const url = `https://www.priceline.com/relax/in/${d?.dest_iata}/from/${arriveDate}/to/${returnDate}/rooms/1/adults/${filters.value.numAdults}?sortby=PRICE`;
+    
+    window.open(url, '_blank');
+}
+
 const getReturnFlightCount = (dest: Destination) =>
 {
   return dest.flights.filter(f => f.dest_iata === store.origin).length;
@@ -406,7 +422,12 @@ const getDestTz = (dest: string) => {
 
         <q-chip clickable color="blue-grey-6" text-color="white" @click="findCar">
           <q-tooltip>Find a car through Priceline</q-tooltip>
-          Book Car
+          Find Car
+        </q-chip>
+
+        <q-chip clickable color="blue-grey-6" text-color="white" @click="findHotel">
+          <q-tooltip>Find a hotel room through Priceline</q-tooltip>
+          Find Hotel
         </q-chip>
 
       </div>
