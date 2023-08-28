@@ -6,7 +6,7 @@ import {useFlightStore} from "@/stores/flights";
 
 import destinations from '@/destinations';
 import type {Destination} from "@/api";
-import moment from "moment";
+import moment from "moment-timezone";
 import FlightView from "@/components/flight.vue";
 import type {Flight} from "@/api";
 
@@ -102,6 +102,31 @@ const bookFlight = () => {
   
 }
 
+const nearestHalfHour = (date: moment.Moment) => {
+  const minutes = date.minutes();
+  if(minutes < 15)
+    return date.minutes(0).seconds(0);
+  else if(minutes < 45)
+    return date.minutes(30).seconds(0);
+  else
+    return date.minutes(0).seconds(0).add(1,'hours');
+}
+const findCar = () => {
+
+  if(!selectedDeparture.value || !selectedReturn.value)
+    return;
+
+  const d = selectedDeparture.value;
+  const arriveDate = nearestHalfHour(moment(d?.arrival_time)).tz(getDestTz(d?.dest_iata)).format('YYYYMMDD-HH:mm');
+
+  const r = selectedReturn.value;
+  const returnDate = nearestHalfHour(moment(r?.departure_time)).tz(getDestTz(r?.from_iata)).subtract(1,'hours').format('YYYYMMDD-HH:mm');
+  
+  const url = `https://www.priceline.com/drive/search/r/listings/${d?.dest_iata}/${d?.dest_iata}/${arriveDate}/${returnDate}/list?driverAge=21&listSortBy=TOTAL_PRICE`;
+  
+  window.open(url, '_blank');
+}
+
 const getReturnFlightCount = (dest: Destination) =>
 {
   return dest.flights.filter(f => f.dest_iata === store.origin).length;
@@ -173,8 +198,8 @@ function calculateSunlightHours(departure: any, arrival: any) {
 
 const getLongestSunlightHoursInLocation = (dest: Destination, human=true) =>
 {
-  const departures = dest.flights.filter(f => f.from_iata === store.origin).map(f => new Date(f.arrival_time).getTime());
-  const returns = dest.flights.filter(f => f.dest_iata === store.origin).map(f => new Date(f.departure_time).getTime());
+  const departures = dest.flights.filter(f => f.from_iata === store.origin).map(f => moment(f.arrival_time).tz(getDestTz(f.dest_iata)).toDate().getTime());
+  const returns = dest.flights.filter(f => f.dest_iata === store.origin).map(f => moment(f.departure_time).tz(getDestTz(f.from_iata)).toDate().getTime());
   
   if(departures.length === 0 || returns.length === 0)
     return 0;
@@ -210,7 +235,10 @@ const getCheapestJourney = (dest: Destination, human=true) =>
 }
 
 const getDestName = (dest: string) => {
-  return (destinations as any)[dest];
+  return (destinations as any)[dest]['desc'];
+}
+const getDestTz = (dest: string) => {
+  return (destinations as any)[dest]['tz'];
 }
 
 </script>
@@ -391,7 +419,11 @@ const getDestName = (dest: string) => {
       </q-chip>
 
       <q-chip clickable square color="yellow-6" @click="bookFlight">
-        Book
+        Book Flight
+      </q-chip>
+
+      <q-chip clickable square color="purple-4" text-color="white" @click="findCar">
+        Book Car
       </q-chip>
 
     </q-toolbar>

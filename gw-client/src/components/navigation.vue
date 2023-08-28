@@ -20,7 +20,7 @@ loadScrape(recent);
 scrape.value = recent;
 
 const getDestName = (dest: string) => {
-  return (destinations as any)[dest];
+  return (destinations as any)[dest] ? (destinations as any)[dest]['desc'] : "";
 }
 
 </script>
