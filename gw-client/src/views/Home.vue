@@ -420,7 +420,7 @@ const getDestTz = (dest: string) => {
   <div class="full-width flex justify-center" style="position:sticky;bottom:0;" v-if="selectedReturn && selectedDeparture">
     <q-toolbar class="bg-green-4 shadow-2 flex justify-center items-center column q-pa-sm">
 
-      <div class="flex" style="gap:.2rem;">
+      <div class="flex justify-center" style="gap:.2rem;">
 
         <q-chip clickable color="red-5" text-color="white" @click="() => {selectedReturn=null;selectedDeparture=null;}">
           Clear
@@ -450,7 +450,7 @@ const getDestTz = (dest: string) => {
       
       <q-separator class="full-width q-ma-xs" />
       
-      <div class="flex" style="gap:.2rem;">
+      <div class="flex justify-center" style="gap:.2rem;">
         <q-chip square color="blue-9" text-color="white" icon="explore">
           <q-tooltip>Destination</q-tooltip>
           {{ selectedDeparture.dest_iata }} | {{ getDestName(selectedDeparture.dest_iata) }}
