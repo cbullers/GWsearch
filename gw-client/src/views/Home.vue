@@ -9,6 +9,7 @@ import type {Destination} from "@/api";
 import moment from "moment-timezone";
 import FlightView from "@/components/flight.vue";
 import type {Flight} from "@/api";
+import {API} from "@/api";
 
 const store = useFlightStore();
 
@@ -142,6 +143,16 @@ const findHotel = () => {
     const url = `https://www.priceline.com/relax/in/${d?.dest_iata}/from/${arriveDate}/to/${returnDate}/rooms/1/adults/${filters.value.numAdults}?sortby=PRICE`;
     
     window.open(url, '_blank');
+}
+
+const findHotelCarCombo = async () => {
+
+  if(!selectedDeparture.value || !selectedReturn.value)
+    return;
+  
+  const url = await API.getPricelineCombo(selectedDeparture.value.id, selectedReturn.value.id, filters.value.numAdults);
+  
+  window.open(url, '_blank');
 }
 
 const getReturnFlightCount = (dest: Destination) =>
@@ -428,6 +439,11 @@ const getDestTz = (dest: string) => {
         <q-chip clickable color="blue-grey-6" text-color="white" @click="findHotel">
           <q-tooltip>Find a hotel room through Priceline</q-tooltip>
           Find Hotel
+        </q-chip>
+
+        <q-chip clickable color="blue-grey-6" text-color="white" @click="findHotelCarCombo">
+          <q-tooltip>Find a hotel room/car combo through Priceline</q-tooltip>
+          Find Hotel+Car Combo
         </q-chip>
 
       </div>

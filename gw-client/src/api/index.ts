@@ -53,5 +53,11 @@ export class API
         const scrapes = await response.json();
         return scrapes['scrapes'];
     }
+    
+    public static async getPricelineCombo(depart: number, ret: number, travelers: number): Promise<string>
+    {
+        const response = await fetch(`${this.BASE_URL}/priceline/${depart}/${ret}/${travelers}`);
+        return await response.text();
+    }
 
 }
