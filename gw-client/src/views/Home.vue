@@ -388,43 +388,61 @@ const getDestTz = (dest: string) => {
   </q-list>
 
   <div class="full-width flex justify-center" style="position:sticky;bottom:0;" v-if="selectedReturn && selectedDeparture">
-    <q-toolbar class="bg-green-4 shadow-2 flex justify-center items-center">
+    <q-toolbar class="bg-green-4 shadow-2 flex justify-center items-center column q-pa-sm">
 
-      <q-chip clickable square color="red-5" text-color="white" @click="() => {selectedReturn=null;selectedDeparture=null;}">
-        Clear
-      </q-chip>
+      <div class="flex" style="gap:.2rem;">
+
+        <q-chip clickable color="red-5" text-color="white" @click="() => {selectedReturn=null;selectedDeparture=null;}">
+          Clear
+        </q-chip>
+
+        <q-chip clickable color="blue-grey-6" text-color="white" @click="bookFlight">
+          <q-tooltip>Navigate to FlyFrontier</q-tooltip>
+          Book Flight
+        </q-chip>
+
+        <q-chip clickable color="blue-grey-6" text-color="white" @click="findCar">
+          <q-tooltip>Find a car through Priceline</q-tooltip>
+          Book Car
+        </q-chip>
+
+      </div>
       
-      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
-        Destination: {{ selectedDeparture.dest_iata }} | {{ getDestName(selectedDeparture.dest_iata) }}
-      </q-chip>
+      <q-separator class="full-width q-ma-xs" />
+      
+      <div class="flex" style="gap:.2rem;">
+        <q-chip square color="blue-9" text-color="white" icon="explore">
+          <q-tooltip>Destination</q-tooltip>
+          {{ selectedDeparture.dest_iata }} | {{ getDestName(selectedDeparture.dest_iata) }}
+        </q-chip>
 
-      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
-        Layovers: {{ moment.duration((selectedReturn.airport_time + selectedDeparture.airport_time)*1000).humanize() }}
-      </q-chip>
+        <q-chip square color="grey-8" text-color="white" icon="airline_stops">
+          <q-tooltip>Layover Time</q-tooltip>
+          {{ moment.duration((selectedReturn.airport_time + selectedDeparture.airport_time)*1000).humanize() }}
+        </q-chip>
 
-      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
-        Total Travel Time: {{ moment.duration((selectedReturn.total_time + selectedDeparture.total_time)*1000).humanize() }}
-      </q-chip>
+        <q-chip square color="secondary" text-color="white" icon="airplane_ticket">
+          <q-tooltip>Total Travel Time</q-tooltip>
+          {{ moment.duration((selectedReturn.total_time + selectedDeparture.total_time)*1000).humanize() }}
+        </q-chip>
 
-      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
-        Time In Location: {{ moment.duration(moment(selectedDeparture.arrival_time).diff(moment(selectedReturn.departure_time))).humanize() }}
-      </q-chip>
+        <q-chip square color="accent" text-color="white" icon="location_on">
+          <q-tooltip>Total Time In Location</q-tooltip>
+          {{ moment.duration(moment(selectedDeparture.arrival_time).diff(moment(selectedReturn.departure_time))).humanize() }}
+        </q-chip>
 
-      <q-chip square color="blue-9" text-color="white" v-if="!mobile">
-        Sunlight Hrs: {{ calculateSunlightHours(new Date(selectedDeparture.arrival_time).getTime(), new Date(selectedReturn.departure_time).getTime()).toFixed(2) }}
-      </q-chip>
+        <q-chip square color="yellow" text-color="black" icon="wb_sunny">
+          <q-tooltip>Total Sunlight Hours In Location (6a-6p)</q-tooltip>
+          {{ moment.duration(calculateSunlightHours(moment(selectedDeparture.arrival_time).tz(getDestTz(selectedDeparture.dest_iata)).toDate().getTime()
+            , moment(selectedReturn.departure_time).tz(getDestTz(selectedReturn.from_iata)).toDate().getTime()), 'hours').humanize() }}
+        </q-chip>
 
-      <q-chip square color="blue-9" text-color="white">
-        ${{ (selectedReturn.fare + selectedDeparture.fare).toFixed(2) }}
-      </q-chip>
+        <q-chip square color="green-8" text-color="white" icon="attach_money">
+          <q-tooltip>Total Cost</q-tooltip>
+          {{ (selectedReturn.fare + selectedDeparture.fare).toFixed(2) }}
+        </q-chip>
 
-      <q-chip clickable square color="yellow-6" @click="bookFlight">
-        Book Flight
-      </q-chip>
-
-      <q-chip clickable square color="purple-4" text-color="white" @click="findCar">
-        Book Car
-      </q-chip>
+      </div>
 
     </q-toolbar>
   </div>
