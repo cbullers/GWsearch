@@ -134,7 +134,7 @@ def get_flight_html(origin, date, session, cjs, roundtrip, start_index=0, destin
         if conn and roundtrip != -1:
             c = conn.cursor()
             # Check if the destination already exists in the table
-            c.execute("SELECT id FROM Destination WHERE dest_iata = ? AND from_iata = ? AND scrape_id", (dest, origin, scrape_id))
+            c.execute("SELECT id FROM Destination WHERE dest_iata = ? AND from_iata = ? AND scrape_id = ?", (dest, origin, scrape_id))
             row = c.fetchone()
             if row:
                 last_dest_added_id = row[0]
@@ -191,7 +191,7 @@ def extract_json(flight_data, origin, dest, date, roundtrip):
     for flight in flights:
         if flight["isGoWildFareEnabled"]:
             if (go_wild_count == 0):
-                print(f"\n{'{} to {}: {}'.format(origin, dest, all_destinations[dest]) if roundtrip != -1 else '**Return flight'} available:")
+                print(f"\n{'{} to {}: {}'.format(origin, dest, all_destinations[dest]['desc']) if roundtrip != -1 else '**Return flight'} available:")
                 #print(f"\n{'{origin} to {dest}: {all_destinations[dest]}' if roundtrip!=-1 else 'Return flight'} available:")
             go_wild_count+=1
             info = flight['legs'][0]
