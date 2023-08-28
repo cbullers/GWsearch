@@ -19,7 +19,7 @@ const filters = ref({
   desiredReturn: null as any,
   sortBy: 'Sunlight Hours',
   sort: 'desc',
-  numAdults: 1,
+  numAdults: 2,
   minimumLocationTimeHours: 4,
 })
 
