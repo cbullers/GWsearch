@@ -31,6 +31,7 @@ roundtrip_avail = {}
 conn = None
 scrape_id = None
 last_dest_added_id = None
+global_origin = ""
 
 # Load destinations from JSON file
 with open("destinations.json", "r") as f:
@@ -234,13 +235,13 @@ def extract_json(flight_data, origin, dest, date, roundtrip):
     else:
         if(roundtrip==-1):
             roundtrip_avail[origin] = all_destinations.get(origin)
-
-            if conn:
-                c = conn.cursor()
-                c.execute("UPDATE Destination SET roundtrip_available = ? WHERE id = ?",(True, last_dest_added_id))
-                conn.commit()
         else:
             destinations_avail[dest] = all_destinations.get(dest)
+            
+        if conn and (origin != global_origin):
+            c = conn.cursor()
+            c.execute("UPDATE Destination SET roundtrip_available = ? WHERE id = ?",(True, last_dest_added_id))
+            conn.commit()
         print(f"{origin} to {dest}: {go_wild_count} GoWild {'return ' if roundtrip==-1 else''}flights available for {date.strftime('%A, %m-%d-%y')}")
     return 1
 
@@ -263,6 +264,7 @@ def print_dests(origin):
 
 def main():
     global all_destinations
+    global global_origin
 
     parser = argparse.ArgumentParser(description='Check flight availability.')
     parser.add_argument('-o', '--origin', type=str, required=True, help='Origin IATA airport code.')
@@ -281,6 +283,7 @@ def main():
 
     args = parser.parse_args()
     origin = args.origin.upper()
+    global_origin = origin
     input_dates = args.dates
     #roundtrip = args.roundtrip()
     cjs = args.cjs
